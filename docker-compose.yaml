@@ -61,16 +61,6 @@ services:
     networks:
       - web_network      
 
-  # MailHog (local mail testing)
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    container_name: laravel8_mailhog
-    ports:
-      - 8025:8025
-    restart: always
-    networks:
-      - web_network
-
   # phpMyAdmin (MySQL managment)
   phpmyadmin:
     image: phpmyadmin:5.1.0-apache
@@ -84,6 +74,22 @@ services:
       PMA_PASSWORD: 1234
     ports:
       - 8200:80
+    restart: always
+    networks:
+      - web_network
+
+  # React App Service
+  reactapp:
+    build: frontend/
+    image: react-app
+    container_name: react_app
+    volumes:
+      - ./frontend:/usr/app
+      - /usr/app/node_modules
+    ports:
+      - "8181:80"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
     restart: always
     networks:
       - web_network
