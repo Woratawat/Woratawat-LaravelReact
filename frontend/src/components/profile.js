@@ -117,7 +117,7 @@ export default function Profile() {
           <p className="text-center">Profile</p>
 
           <div className="form-group">
-            <label for="Username" className="form-label">Username</label>
+            <label  className="form-label">Username</label>
             <p>Username</p>
           </div>
 

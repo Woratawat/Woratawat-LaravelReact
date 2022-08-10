@@ -3,29 +3,32 @@ import 'mdb-react-ui-kit/dist/css/mdb.min.css'
 import logo from '../logo.svg';
 import {  MDBInput ,MDBBtn  } from 'mdb-react-ui-kit'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import swal from 'sweetalert'; 
 
 export default function Register() {
 
-  const [images, setImage] = useState([]);
-  const [imagURLs, setImageURLs] = useState([]);
+  const navigate  = useNavigate()
+  const [showImage, setShowimage] = useState([]);
+  const [imageURLs, setImageURLs] = useState([]);
+  
   const [data, setData] = useState({
     user: '',
     pass: '',
     fname: '',
     lname: '',
-    pic: '',
   });
-
+  const [images, setImage] = useState([]);
   const [errors, setErrors] = useState({});
 
   useEffect(()=>{
 
-      if(images.length < 1 )return;
+      if(showImage.length < 1 )return;
       const newImgURL  = []
-      images.forEach(image => newImgURL.push(URL.createObjectURL(image)))
+      showImage.forEach(image => newImgURL.push(URL.createObjectURL(image)))
       setImageURLs(newImgURL)
 
-  },[images]);
+  },[showImage]);
 
   function onImageChange(e){
     const image = e.target.files[0];
@@ -38,8 +41,9 @@ export default function Register() {
         setErrors({...errors, 'pic':'Please upload a file smaller than 5 MB.'})
         return false;
       }else{
-        setData({...data, 'pic':image})
-        setImage([...e.target.files])
+        e.persist();
+        setImage({pic:image})
+        setShowimage([...e.target.files])
       }
     }
 
@@ -47,15 +51,18 @@ export default function Register() {
 
   const handleChange = (e) => {
 
+    e.persist();
     setData({ ...data, [e.target.name]: e.target.value });
 
   };
 
   const varlidateForm = (e) => {
 
-    const {user,pass,fname,lname,pic} = data
+    const {user,pass,fname,lname,} = data
+    const {pic} = images
+
     const newErrors = {}
-    var regex = /(?=.*[0-9])(?=.*[_])[a-zA-Z0-9_]/;
+    var regex = /^[a-zA-Z0-9_\]"/?]*$/;
 
     var countPass = []
 
@@ -104,10 +111,32 @@ export default function Register() {
     if(Object.keys(fromErrors).length > 0){
       setErrors(fromErrors);
     }else{
-      //console.log(data)
-      // axios.post('/api/register',data).then(res =>{
 
-      // })
+      setErrors({})
+      // console.log(data)
+      const fromData = new FormData();
+
+      fromData.append('user',data.user)
+      fromData.append('pass',data.pass)
+      fromData.append('fname',data.fname)
+      fromData.append('lname',data.lname)
+      fromData.append('pic',images.pic)
+
+      axios.get('/sanctum/csrf-cookie').then(response => {
+        axios.post('/api/register',fromData).then(res =>{
+
+          if(res.data.success === true){
+            // localStorage.setItem('auth_token',res.data.token)
+            // localStorage.setItem('username',res.data.user)
+            swal("Success!",res.data.message,"success",{buttons: false,});
+            navigate('/Login')
+          }else{
+            setErrors({...errors, 'user':res.data.user})
+          }
+          
+        });
+      });
+
     }
 
   }
@@ -175,7 +204,7 @@ export default function Register() {
         <div className="text-center">
 
           {
-            imagURLs.length !== 0 ? imagURLs.map((imgsrc,index)=>(
+            imageURLs.length !== 0 ? imageURLs.map((imgsrc,index)=>(
               <img key={`i_${index}`} src={imgsrc} height="250" width="250" className="rounded" alt="logo" />
             )):
               <img src={logo} height="250" width="250" className="rounded" alt="logo" />
