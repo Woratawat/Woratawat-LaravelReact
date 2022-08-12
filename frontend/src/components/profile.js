@@ -305,7 +305,7 @@ export default function Profile() {
 
             </div>
 
-          </form>npx serve
+          </form>
         </MDBTabsPane>
         <MDBTabsPane show={Active === 'tab2'}>
           <form onSubmit={handleSubmitPassword} className='g-3 row d-flex justify-content-center pt-3'>
@@ -316,13 +316,6 @@ export default function Profile() {
                 <p className="text-center">Change Password</p>
 
                 <div className='col-md-12 mt-4'>
-                  {/* <MDBInput
-                    value={data.pass}
-                    name='pass'
-                    onChange={handleChange}
-                    label='Password'
-                    type='Password'
-                  />          */}
                   <MDBInput      
                     value={pass}
                     name='pass'
