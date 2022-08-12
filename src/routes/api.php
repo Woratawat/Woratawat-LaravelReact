@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\UserController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +33,16 @@ Route::get('/checkingAuthenication', function(){
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
+
+  Route::prefix('profile')->group(function () {
+
+    Route::get('/', [UserController::class, 'profile']);
+
+    Route::post('edit', [UserController::class, 'editProfile']);
+
+    Route::post('changePassword', [UserController::class, 'changePassword']);
+
+  });
 
   Route::post('logout', [AuthController::class, 'logout']);
 

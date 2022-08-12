@@ -122,12 +122,12 @@ export default function Register() {
       fromData.append('lname',data.lname)
       fromData.append('pic',images.pic)
 
+      swal("Loading!","Please wait...","warning",{buttons: false,});
       axios.get('/sanctum/csrf-cookie').then(response => {
         axios.post('/api/register',fromData).then(res =>{
 
           if(res.data.success === true){
-            // localStorage.setItem('auth_token',res.data.token)
-            // localStorage.setItem('username',res.data.user)
+            swal.close()
             swal("Success!",res.data.message,"success",{buttons: false,});
             navigate('/Login')
           }else{
@@ -142,7 +142,7 @@ export default function Register() {
   }
 
   return(
-    <form onSubmit={handleSubmit} className='g-3 row d-flex justify-content-center pt-5'>
+    <form onSubmit={handleSubmit} className='g-3 row d-flex justify-content-center pt-3'>
 
       <div className="col-sm-6 ">
 

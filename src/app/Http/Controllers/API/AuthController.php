@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Password_log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -47,6 +48,11 @@ class AuthController extends Controller
       ]);
 
       $token = $user->createToken($user->name.'_token')->plainTextToken;
+
+      // $pass_log = Password_log::create([
+      //   'user_id' => $user->id,
+      //   'password' => Hash::make($request->get('pass')),  
+      // ]);
 
       return response()->json([
         'success'=>true,

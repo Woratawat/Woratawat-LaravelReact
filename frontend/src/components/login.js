@@ -2,13 +2,16 @@ import React, {useState , useEffect} from 'react'
 import 'mdb-react-ui-kit/dist/css/mdb.min.css'
 import {  MDBInput ,MDBBtn  } from 'mdb-react-ui-kit'
 import { useNavigate } from 'react-router-dom'
-import { Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { actionLogin } from '../redux/app/action';
 import axios from 'axios'
 import swal from 'sweetalert'; 
 
 export default function Login({}) {
   
   const navigate  = useNavigate()
+  const dispatch = useDispatch()
   const [errors, setErrors] = useState({});
   const [data, setData] = useState({
     user: '',
@@ -55,10 +58,13 @@ export default function Login({}) {
         axios.post('/api/login',fromData).then(res =>{
           swal.close()
           if(res.data.success === true){        
-            localStorage.setItem('auth_token',res.data.token)
-            localStorage.setItem('username',res.data.user)
+            dispatch(actionLogin(res.data.token,res.data.user))
             swal("Success!",res.data.message,"success",{buttons: false,});
-            navigate('/')
+
+            setTimeout(() => {
+              navigate('/')
+            }, 1000);
+
           }else{
             setData({ ...data,'pass': '' });
             setErrors({...errors, 'pass':res.data.pass})

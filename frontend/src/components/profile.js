@@ -1,46 +1,95 @@
 import React, {useState , useEffect} from 'react'
 import 'mdb-react-ui-kit/dist/css/mdb.min.css'
-import logo from '../logo.svg';
-import {  MDBInput ,MDBBtn  } from 'mdb-react-ui-kit'
+import {  
+  MDBInput ,
+  MDBBtn  , 
+  MDBTabs,
+  MDBTabsItem,
+  MDBTabsLink,
+  MDBTabsContent,
+  MDBTabsPane 
+} from 'mdb-react-ui-kit'
 import axios from 'axios'
+import swal from 'sweetalert'; 
+import "../App.css"
 
 export default function Profile() {
 
-  const [images, setImage] = useState([]);
-  const [imagURLs, setImageURLs] = useState([]);
   const [data, setData] = useState({
+    id: '',
     user: '',
-    pass: '',
     fname: '',
     lname: '',
-    pic: '',
   });
-
+  const [pass, setPass] = useState('');
+  const [images, setImage] = useState([]);
+  const [showimages, setShowimage] = useState([]);
   const [errors, setErrors] = useState({});
+  const [errorsPass, setErrorPass] = useState({});
+  const [Active, setActive] = useState('tab1');
 
   useEffect(()=>{
+    
+    swal("Loading!","Please wait...","warning",{buttons: false,});
+    getProfile()
 
-      if(images.length < 1 )return;
-      const newImgURL  = []
-      images.forEach(image => newImgURL.push(URL.createObjectURL(image)))
-      setImageURLs(newImgURL)
+  },[]);
 
-  },[images]);
+  function getProfile(){
+
+    axios.get('/api/profile').then(res =>{
+
+      swal.close()
+      setData({
+        id: res.data.data.id,
+        user: res.data.data.name,
+        fname: res.data.data.firstname,
+        lname: res.data.data.lastname,
+      })
+      setImage(res.data.data.pic)
+    });
+
+  }
+
+  function handleTabClick(value){
+    if (value === Active) {
+      return;
+    }
+
+    setActive(value);
+  };
 
   function onImageChange(e){
+
     const image = e.target.files[0];
 
     if (!image.name.match(/\.(jpg|jpeg|png|bmp)$/)) {
-        setErrors({...errors, 'pic':'select valid imag.'})
-        return false;
+
+      setErrors({...errors, 'pic':'select valid imag.'})
+      return false;
+
     }else{
+
       if (image.size > 5e6) {
+
         setErrors({...errors, 'pic':'Please upload a file smaller than 5 MB.'})
         return false;
+
       }else{
-        setData({...data, 'pic':image})
-        setImage([...e.target.files])
+
+        e.persist();
+        setImage(image)
+        const reader = new FileReader();
+        reader.onload = () =>{
+          if(reader.readyState === 2 ){
+            setShowimage(reader.result)
+          }
+
+        }
+        reader.readAsDataURL(e.target.files[0])
+
       }
+
     }
 
   }
@@ -49,41 +98,15 @@ export default function Profile() {
 
     setData({ ...data, [e.target.name]: e.target.value });
 
+    setPass(e.target.value);
+
   };
 
-  const varlidateForm = (e) => {
+  function varlidateForm(e){
 
-    const {user,pass,fname,lname,pic} = data
+    const {fname,lname,} = data
+
     const newErrors = {}
-    var regex = /(?=.*[0-9])(?=.*[_])[a-zA-Z0-9_]/;
-
-    var countPass = []
-
-    Object.values(pass).map((d,i)=>{
-      // console.log(d.charCodeAt(0))
-      if(pass[1].charCodeAt(0) === pass[i].charCodeAt(0)+1 || pass[1].charCodeAt(0)+1 === pass[i].charCodeAt(0)){
-        countPass.push(true)
-      }else{
-        countPass.push(false)
-      }
-
-    });
-
-    const duplicate = countPass.filter(value => value === true).length;
-
-    if(!user || user === '')newErrors.user='Please enter username.'
-    else if(user.length < 4)
-      newErrors.user='Please enter username more than 4 character.'
-    else if(user.length > 12)
-      newErrors.user='Please enter username less than 12 character.'
-    else if(regex.test(JSON.stringify(user)) === false)
-      newErrors.user='รับตัวอักษรได้เฉพาะ A-Z, a-z, 0-9, _ (underscore)'
-     
-    if(!pass || pass === '')newErrors.pass='Please enter password.'
-    else if(pass.length < 6)
-      newErrors.pass='Please enter password more than 6 character.'
-    else if(duplicate !== 0)
-      newErrors.pass='password ต้องไม่เป็นตัวอักษรหรือตัวเลขเรียงกัน เช่น 123456, abcde'
 
     if(!fname || fname === '')newErrors.fname='Please enter firstname.'
     else if(fname.length > 60)
@@ -91,7 +114,8 @@ export default function Profile() {
 
     if(lname.length > 60)newErrors.lname='Please enter lastname less than 60 character.'
 
-    if(!pic || pic === '')newErrors.pic='Please choose your Profile Image.'
+
+   return newErrors
 
   };
 
@@ -103,93 +127,232 @@ export default function Profile() {
     if(Object.keys(fromErrors).length > 0){
       setErrors(fromErrors);
     }else{
-      console.log(data)
+      setErrors({})
+      const fromData = new FormData();
+
+      fromData.append('id',data.id)
+      fromData.append('fname',data.fname)
+      fromData.append('lname',data.lname)
+      fromData.append('pic',images)
+
+      swal("Loading!","Please wait...","warning",{buttons: false,});
+
+      axios.post('/api/profile/edit',fromData).then(res =>{
+
+        if(res.data.success === true){
+          swal.close()
+          swal("Success!",res.data.message,"success",{buttons: false,});
+          getProfile()
+
+        }
+        
+      });
+
+    }
+
+  }
+
+  function varlidatePassword(e){
+
+    const newErrors = {}
+    var countPass = []
+
+    Object.values(pass).map((d,i)=>{
+      if(pass[1].charCodeAt(0) === pass[i].charCodeAt(0)+1 || pass[1].charCodeAt(0)+1 === pass[i].charCodeAt(0)){
+        countPass.push(true)
+      }else{
+        countPass.push(false)
+      }
+
+    });
+    const duplicate = countPass.filter(value => value === true).length;
+    
+    if(!pass || pass === '')newErrors.pass='Please enter password.'
+    else if(pass.length < 6)
+      newErrors.pass='Please enter password more than 6 character.'
+    else if(duplicate !== 0)
+      newErrors.pass='password ต้องไม่เป็นตัวอักษรหรือตัวเลขเรียงกัน เช่น 123456, abcde'
+
+    return newErrors
+  }
+
+  function handleSubmitPassword(e){
+
+    e.preventDefault()
+
+    const passErrors = varlidatePassword()
+
+    if(Object.keys(passErrors).length > 0){
+      setErrorPass(passErrors);
+    }else{
+      setErrors({})
+      const fromData = new FormData();
+
+      fromData.append('id',data.id)
+      fromData.append('pass',pass)
+
+      swal("Loading!","Please wait...","warning",{buttons: false,});
+
+      axios.post('/api/profile/changePassword',fromData).then(res =>{
+
+        // console.log(res.data)
+        if(res.data.success === true){
+          swal.close()
+          swal("Success!",res.data.message,"success",{buttons: false,});
+          setPass('');
+          setErrorPass({})
+          // getProfile()
+        }else{
+          swal.close()
+          setPass('');
+          setErrorPass({...errorsPass, 'pass':res.data.message})
+        }
+        
+      });
+
     }
 
   }
 
   return(
-    <form onSubmit={handleSubmit} className='g-3 row d-flex justify-content-center pt-5'>
+    <div className='card mt-3'>
+      <h1 className='text-center '>My Profile</h1>
+      <MDBTabs fill className='mb-3'>
+          <MDBTabsItem>
+            <MDBTabsLink onClick={() => handleTabClick('tab1')} active={Active === 'tab1'}>
+              Profile
+            </MDBTabsLink>
+          </MDBTabsItem>
+          <MDBTabsItem>
+            <MDBTabsLink onClick={() => handleTabClick('tab2')} active={Active === 'tab2'}>
+              Change Password
+            </MDBTabsLink>
+          </MDBTabsItem>
+        </MDBTabs>
 
-      <div className="col-sm-6 ">
+      <MDBTabsContent>
+        <MDBTabsPane show={Active === 'tab1'}>
+          <form onSubmit={handleSubmit} className='g-3 row d-flex justify-content-center pt-3'>
 
-        <div className="card p-4">
-          <p className="text-center">Profile</p>
+            <div className="col-sm-6 ">
 
-          <div className="form-group">
-            <label  className="form-label">Username</label>
-            <p>Username</p>
-          </div>
+              <div className="p-4">
+                <p className="text-center">Edit Profile</p>
 
-          <div className='col-md-12 mt-4'>
-            <MDBInput
-              value={data.pass}
-              name='pass'
-              onChange={handleChange}
+                <div className='col-md-12 mt-4'>
+                  <MDBInput
+                    value={data.user}
+                    name='fname'
+                    label='Username'
+                    disabled
+                  />        
+                </div>
+
+                <div className='col-md-12 mt-4'>
+                  <MDBInput
+                    value={data.fname}
+                    name='fname'
+                    onChange={handleChange}              
+                    label='First Name'
+                  />        
+                  {
+                    errors.fname ? <span className="text-danger">{errors.fname}</span> : null
+                  }
+                </div>
+
+                <div className='col-md-12 mt-4'>
+                  <MDBInput      
+                    value={data.lname}
+                    name='lname'
+                    onChange={handleChange}
+                    label='Last Name'
+                  />          
+                  {
+                    errors.lname ? <span className="text-danger">{errors.lname}</span> : null
+                  }
+                </div>
+
+                <div className="text-center">
+
+                  {
+                    showimages.length !== 0 ? 
+                    <img src={showimages} height="250" width="250" className="circle" alt="img" />
+                    :
+                    <img src={images} height="250" width="250" className="circle" alt="img" />
+
+                  }
+
+                </div>
+
+                <div className='col-md-12 mt-4'>
+                  <input className='form-control' multiple accept='image/*' type='file'  onChange={onImageChange}/>
+                  {
+                    errors.pic ? <span className="text-danger">{errors.pic}</span> : null
+                  }
+                </div>
+
+                <br/>
+                <div className="d-grid gap-2 col-6 mx-auto ">
+                  <MDBBtn type="submit" color="primary">
+                    Submit
+                  </MDBBtn>
+                  <MDBBtn color="warning">
+                      Cancel
+                  </MDBBtn>
+                </div>
+
+              </div>
+
+            </div>
+
+          </form>npx serve
+        </MDBTabsPane>
+        <MDBTabsPane show={Active === 'tab2'}>
+          <form onSubmit={handleSubmitPassword} className='g-3 row d-flex justify-content-center pt-3'>
+
+            <div className="col-sm-6 ">
               
-              label='Password'
-              type='Password'
-            />         
-            {
-              errors.pass ? <span className="text-danger">{errors.pass}</span> : null
-            }
-          </div>
+            <div className=" p-4">
+                <p className="text-center">Change Password</p>
 
-          <div className='col-md-12 mt-4'>
-            <MDBInput
-              value={data.fname}
-              name='fname'
-              onChange={handleChange}
-              
-              label='First Name'
-            />        
-            {
-              errors.fname ? <span className="text-danger">{errors.fname}</span> : null
-            }
-          </div>
+                <div className='col-md-12 mt-4'>
+                  {/* <MDBInput
+                    value={data.pass}
+                    name='pass'
+                    onChange={handleChange}
+                    label='Password'
+                    type='Password'
+                  />          */}
+                  <MDBInput      
+                    value={pass}
+                    name='pass'
+                    onChange={handleChange}
+                    label='Password'
+                    type='Password'
+                  />  
+                  {
+                    errorsPass.pass ? <span className="text-danger">{errorsPass.pass}</span> : null
+                  }
+                </div>
 
-        <div className='col-md-12 mt-4'>
-        <MDBInput      
-            value={data.lname}
-            name='lname'
-            onChange={handleChange}
-            label='Last Name'
-          />          
-          {
-            errors.lname ? <span>test</span> : null
-          }
-        </div>
+                <div className="d-grid gap-2 col-6 mx-auto mt-4">
+                  <MDBBtn type="submit" color="primary">
+                    Submit
+                  </MDBBtn>
+                  <MDBBtn color="warning">
+                      Cancel
+                  </MDBBtn>
+                </div>
 
+              </div>
+             
+            </div>
 
-        <div className="text-center">
+          </form>
+        </MDBTabsPane>
+      </MDBTabsContent>
+    </div>
 
-          {
-            imagURLs.length !== 0 ? imagURLs.map((imgsrc,index)=>(
-              <img key={`i_${index}`} src={imgsrc} height="250" width="250" className="rounded" alt="logo" />
-            )):
-              <img src={logo} height="250" width="250" className="rounded" alt="logo" />
-          }
-
-        </div>
-
-        <div className='col-md-12 mt-4'>
-          {/* <MDBFile label='Profile Image' id='customFile' onChange={onImageChange}  />   */}
-          <input className='form-control' multiple accept='image/*' type='file'  onChange={onImageChange}/>
-          {
-            errors.pic ? <span className="text-danger">{errors.pic}</span> : null
-          }
-        </div>
-
-
-        <br/>
-        <MDBBtn type="submit" multiple accept="image/*"  color="primary">
-          Submit
-        </MDBBtn>
-
-        </div>
-
-      </div>
     
-    </form>
   )
 }
