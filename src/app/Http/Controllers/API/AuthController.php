@@ -49,10 +49,10 @@ class AuthController extends Controller
 
       $token = $user->createToken($user->name.'_token')->plainTextToken;
 
-      // $pass_log = Password_log::create([
-      //   'user_id' => $user->id,
-      //   'password' => Hash::make($request->get('pass')),  
-      // ]);
+      $pass_log = Password_log::create([
+        'user_id' => $user->id,
+        'password' => Hash::make($request->get('pass')),  
+      ]);
 
       return response()->json([
         'success'=>true,
