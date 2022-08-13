@@ -295,10 +295,7 @@ export default function Profile() {
                 <div className="d-grid gap-2 col-6 mx-auto ">
                   <MDBBtn type="submit" color="primary">
                     Submit
-                  </MDBBtn>
-                  <MDBBtn color="warning">
-                      Cancel
-                  </MDBBtn>
+                  </MDBBtn>             
                 </div>
 
               </div>
@@ -331,10 +328,7 @@ export default function Profile() {
                 <div className="d-grid gap-2 col-6 mx-auto mt-4">
                   <MDBBtn type="submit" color="primary">
                     Submit
-                  </MDBBtn>
-                  <MDBBtn color="warning">
-                      Cancel
-                  </MDBBtn>
+                  </MDBBtn>                 
                 </div>
 
               </div>
